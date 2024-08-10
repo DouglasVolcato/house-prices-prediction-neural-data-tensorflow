@@ -1,23 +1,56 @@
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
-from Utils.GetData import GetData
-import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
+import os
+from tensorflow.keras.callbacks import EarlyStopping
 
-data = GetData().execute()
+# Environment variable for TensorFlow (if needed)
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-df = pd.DataFrame(data)
+# Assuming GetData returns data in a suitable format
+from Utils.GetData import GetData
+df = GetData().execute()
+
+# Define features and target
 x = df[['housing_median_age','total_rooms','total_bedrooms','median_income','ocean_proximity_<1H OCEAN','ocean_proximity_INLAND','ocean_proximity_ISLAND','ocean_proximity_NEAR BAY','ocean_proximity_NEAR OCEAN']]
 y = df[['median_house_value']]
 
-model = Sequential() # module that allows to create larers
+# Handle missing values
+df = df.dropna()
+x = df[['housing_median_age','total_rooms','total_bedrooms','median_income','ocean_proximity_<1H OCEAN','ocean_proximity_INLAND','ocean_proximity_ISLAND','ocean_proximity_NEAR BAY','ocean_proximity_NEAR OCEAN']]
+y = df[['median_house_value']]
 
-model.add(Dense(units=64, activation='relu', input_shape=(9,))) # input layer
-model.add(Dense(units=32, activation='relu')) # hidden layer
-model.add(Dense(units=1)) # output layer
+# Feature scaling
+scaler_x = StandardScaler()
+x_scaled = scaler_x.fit_transform(x)
 
-model.compile(optimizer='adam', loss='mean_squared_error')
-model.fit(x, y, epochs=100, batch_size=1) # trainning
+# Target scaling
+scaler_y = StandardScaler()
+y_scaled = scaler_y.fit_transform(y)
 
-model.save('data/model.h5')
-# WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`.
+# Define the model
+model = Sequential()
+model.add(Dense(64, activation='relu', input_shape=(x_scaled.shape[1],)))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(1))
+
+# Compile the model
+optimizer = Adam(learning_rate=0.001)  # Reduced learning rate
+model.compile(optimizer=optimizer, loss='mean_squared_error')
+
+# Train the model
+early_stopping = EarlyStopping(monitor='loss', patience=10)
+model.fit(x_scaled, y_scaled, epochs=100, verbose=1, callbacks=[early_stopping])
+
+# Evaluate the model
+scores = model.evaluate(x_scaled, y_scaled, verbose=0)
+print("Mean Squared Error: ", scores)
+
+# Save the model
+model.save('data/model.keras')
+
+# Predict using the model
+y_pred_scaled = model.predict(x_scaled)
+y_pred = scaler_y.inverse_transform(y_pred_scaled)

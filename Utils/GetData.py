@@ -6,6 +6,6 @@ class GetData:
 
     def execute(self):
         data = pd.read_csv(self.__csv_file_path)
-        data = pd.get_dummies(data, columns=['ocean_proximity'])
-        data = data.drop(['longitude', 'latitude', 'population', 'households'], axis=1)
-        return data
+        data = pd.get_dummies(data, prefix='ocean_proximity', columns=['ocean_proximity'])
+        data.dropna()
+        return data[['housing_median_age','total_rooms','total_bedrooms','median_income','ocean_proximity_<1H OCEAN','ocean_proximity_INLAND','ocean_proximity_ISLAND','ocean_proximity_NEAR BAY','ocean_proximity_NEAR OCEAN','median_house_value']]
