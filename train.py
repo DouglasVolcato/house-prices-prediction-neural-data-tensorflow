@@ -12,17 +12,12 @@ y = df[['median_house_value']]
 
 model = Sequential() # module that allows to create larers
 
-#input layer
-model.add(Dense(units=64, activation='relu', input_shape=(9,)))
-
-#hidden layer
-model.add(Dense(units=32, activation='relu'))
-
-# output layer
-model.add(Dense(units=1))
+model.add(Dense(units=64, activation='relu', input_shape=(9,))) # input layer
+model.add(Dense(units=32, activation='relu')) # hidden layer
+model.add(Dense(units=1)) # output layer
 
 model.compile(optimizer='adam', loss='mean_squared_error')
+model.fit(x, y, epochs=100, batch_size=1) # trainning
 
-model.fit(x, y, epochs=100, batch_size=1)
-
-model.save('model.h5')
+model.save('data/model.h5')
+# WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`.
