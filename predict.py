@@ -1,15 +1,25 @@
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from Utils.GetData import GetData
 import tensorflow as tf
-import pandas as pd
 import numpy as np
-import os
 
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-
+# Load the model
 model = tf.keras.models.load_model('data/model.keras')
 
-sample_input = np.array([[21.0,880.0,329.0,3.64,True,False,False,False,False]])
-prediction = model.predict(sample_input)
-print('Value: ', prediction)
+# Load the scaling parameters
+x_mean = np.load('data/scaler_x_mean.npy')
+x_scale = np.load('data/scaler_x_scale.npy')
+y_mean = np.load('data/scaler_y_mean.npy')
+y_scale = np.load('data/scaler_y_scale.npy')
+
+# Test prediction
+test_input = np.array([[40]])
+
+# Manually scale the test input
+test_input_scaled = (test_input - x_mean) / x_scale
+
+# Predict using the scaled test input
+test_prediction_scaled = model.predict(test_input_scaled)
+
+# Manually unscale the prediction
+test_prediction = test_prediction_scaled * y_scale + y_mean
+
+print('Test Prediction:', test_prediction.flatten())
